@@ -1,3 +1,24 @@
+## Implementation Notes
+
+- **Rate Limiter**: Sliding window per `userId` in `src/rateLimit.js`. For multi-instance scale, replace with Redis INCR + Lua script.
+- **Idempotency**: DB-level `UNIQUE` constraint on `idempotency_key` prevents duplicate inserts even under concurrent retries. Same key always returns same resource.
+- **Retry/Backoff**: All DB calls wrapped in exponential backoff with jitter (3 retries, base 100ms) to handle transient failures simulated by `DB_FAIL_RATE`.
+- **DB Failure**: Returns `503 db_unavailable` after retries exhausted. No duplicates created on retry due to idempotency constraint.
+- See `SCALE.md` for 10k RPS design.
+
+## Setup
+
+```bash
+npm install
+cp .env.example .env
+npm start
+```
+
+## Run Tests
+
+```bash
+npm test
+```
 # Signals Challenge (Node.js + Fastify)
 
 Build a minimal production-leaning service that can **handle load**, **rate limit**, and **avoid duplicates** via idempotency.
